@@ -17,6 +17,7 @@ from YAPL.YAPLVisitor import YAPLVisitor
 import backend.visitor as Visitor
 import backend.listener as Listener
 from backend.custom_error import CustomErrorListener
+import backend.intermediate as inter
 from graphviz import Digraph
 import shutil
 import sys
@@ -131,10 +132,16 @@ def get_code():
         errors += listen
         SyntaxErrors = error_listener.ERRORS
         errors += SyntaxErrors
+        if len(errors) > 0:
+            intercode = ""
+        else:
+            intermedio = inter.Inter(visitonator.total_scopes,visitonator.clases,visitonator.metodos,visitonator.ownmethod,visitonator.property,visitonator.formal,visitonator.assignment,visitonator.methodcall,visitonator.ifCount,visitonator.equal,visitonator.lessequal,visitonator.lessthan,visitonator.minus,visitonator.add,visitonator.division,visitonator.multiply,visitonator.whileCount,visitonator.declaration,visitonator.letin,visitonator.void,visitonator.negative,visitonator.boolnot,visitonator.case,visitonator.new,visitonator.string,visitonator.valor,visitonator.block,visitonator.id,visitonator.parentheses,visitonator.fals,visitonator.integer,visitonator.truet,visitonator.instr,visitonator.outstring,visitonator.outint)
+            intermedio.visit(tree)
+            intercode = intermedio.line.split("\n")
 
     else:
         errors = []
-    return render_template("home.html", errors = errors, code = code)
+    return render_template("home.html", errors = errors, code = code, intercode = intercode, )
 
 
 @app.route('/tree.html')
