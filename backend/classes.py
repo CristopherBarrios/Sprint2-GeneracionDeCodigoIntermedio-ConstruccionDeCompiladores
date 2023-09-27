@@ -180,10 +180,13 @@ class Decla:
         print("Declaration: " + str(self.name) + "  type: " + str(self.type) + " expr: " + str(self.expr))
 
 class LetIn:
-    def __init__(self,let,let1,expr):
+    def __init__(self,let,let1,expr,clase,metodo,letpues):
         self.name = let
         self.type = let1
         self.expr = expr
+        self.clase = clase
+        self.metodo = metodo
+        self.letpues = letpues
 
     def get_letin_values(self):
         print("Name: " + str(self.name) + "  type: " + str(self.type) + "  expr: " + str(self.expr))

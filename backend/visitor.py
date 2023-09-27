@@ -218,9 +218,9 @@ class MyYAPLVisitor(YAPLVisitor):
             tipo = ctx.TYPE().getText()
         self.method_ids += 1
 
-        for meto in self.metodos:
-            if name == meto.name:
-                self.method_ids -= 1
+        # for meto in self.metodos:
+        #     if name == meto.name:
+        #         self.method_ids -= 1
                 #return 0
 
         formalParams = []
@@ -497,6 +497,7 @@ class MyYAPLVisitor(YAPLVisitor):
         self.variables.append(let)
         self.cont_lets += 1
         self.let_scope.append('let' + str(self.cont_lets))
+        letpues = len(self.let_scope)
         let1 = None
 
         if ctx.declaration(1) is not None:
@@ -505,7 +506,7 @@ class MyYAPLVisitor(YAPLVisitor):
             self.variables.append(let1)
         expr = self.visit(ctx.expr())
 
-        letin = lista.LetIn(let,let1,expr)
+        letin = lista.LetIn(let,let1,expr,self.actual_scope,self.method_scope,letpues)
         self.letin.append(letin)
         self.let_scope.pop()
         if declaCont != 0:
@@ -1101,11 +1102,11 @@ class MyYAPLVisitor(YAPLVisitor):
             else:
                 if ident is None:
                     if id['type'] != 'Int':
-                        new_error = tables.Error("No corresponden los tipos de la comparacion", ctx.start.line, ctx.start.column,ctx.expr(1).getText())
+                        new_error = tables.Error("No corresponden los tipos de la resta", ctx.start.line, ctx.start.column,ctx.expr(1).getText())
                         self.ERRORS.append(new_error) 
                 else:
                     if ident['type'] != 'Int':
-                        new_error = tables.Error("No corresponden los tipos de la comparacion", ctx.start.line, ctx.start.column,ctx.expr(1).getText())
+                        new_error = tables.Error("No corresponden los tipos de la resta", ctx.start.line, ctx.start.column,ctx.expr(1).getText())
                         self.ERRORS.append(new_error) 
 
         if type(l).__name__ == 'MethodCall':
@@ -1117,15 +1118,17 @@ class MyYAPLVisitor(YAPLVisitor):
             else:
                 if ident is None:
                     if id['type'] != 'Int':
-                        new_error = tables.Error("No corresponden los tipos de la comparacion", ctx.start.line, ctx.start.column,ctx.expr(0).getText())
+                        new_error = tables.Error("No corresponden los tipos de la resta", ctx.start.line, ctx.start.column,ctx.expr(0).getText())
                         self.ERRORS.append(new_error) 
                 else:
                     if ident['type'] != 'Int':
-                        new_error = tables.Error("No corresponden los tipos de la comparacion", ctx.start.line, ctx.start.column,ctx.expr(0).getText())
+                        new_error = tables.Error("No corresponden los tipos de la resta", ctx.start.line, ctx.start.column,ctx.expr(0).getText())
                         self.ERRORS.append(new_error) 
 
+        ## Hay que colocar Parentheses
+
         if type(l).__name__ !=  "Int" or type(r).__name__ !=  "Int":
-            if type(l).__name__ !=  "Id" and type(r).__name__ !=  "Id" and type(l).__name__ != 'IfCount' and type(r).__name__ != 'IfCount' and type(l).__name__ != 'OwnMethod'and type(r).__name__ != 'OwnMethod' and type(l).__name__ != 'MethodCall' and type(r).__name__ != 'MethodCall':
+            if type(l).__name__ !=  "Id" and type(r).__name__ !=  "Id" and type(l).__name__ != 'IfCount' and type(r).__name__ != 'IfCount' and type(l).__name__ != 'OwnMethod'and type(r).__name__ != 'OwnMethod' and type(l).__name__ != 'MethodCall' and type(r).__name__ != 'MethodCall' and type(l).__name__ != 'Add' and type(r).__name__ != 'Add' and type(l).__name__ != 'Minus' and type(r).__name__ != 'Minus' and type(l).__name__ != 'Parentheses' and type(r).__name__ != 'Parentheses':
                 new_error = tables.Error("No corresponden los tipos de la resta", ctx.start.line, ctx.start.column,ctx.getText())
                 self.ERRORS.append(new_error)
         
@@ -1435,7 +1438,9 @@ class MyYAPLVisitor(YAPLVisitor):
                         new_error = tables.Error("No corresponden los tipos de la comparacion", ctx.start.line, ctx.start.column,ctx.expr())
                         self.ERRORS.append(new_error) 
 
-        if (type(bn).__name__ != 'TrueCount' and type(bn).__name__ != 'FalseCount' and type(bn).__name__ != 'Id' and type(bn).__name__ != 'MethodCall'):
+            # hay que colocar el elif de Parentheses
+
+        if (type(bn).__name__ != 'TrueCount' and type(bn).__name__ != 'FalseCount' and type(bn).__name__ != 'Id' and type(bn).__name__ != 'MethodCall' and type(bn).__name__ != 'Parentheses'):
                 new_error = tables.Error("No corresponden los tipos del not", ctx.start.line, ctx.start.column,ctx.getText())
                 self.ERRORS.append(new_error)
 
@@ -1554,7 +1559,7 @@ class MyYAPLVisitor(YAPLVisitor):
                     new_error = tables.Error("No se declaro la variable", ctx.start.line, ctx.start.column,expr.id)
                     self.ERRORS.append(new_error) 
                 else:
-                    if id is not None:
+                    if id is not None and idC is not None: #cambie aqui no estoy seguro
                         if id.type != idC['scope'] and id.type != idC['type']:
                             new_error = tables.Error("No corresponden los tipos con el metodo", ctx.start.line, ctx.start.column,expr.id)
                             self.ERRORS.append(new_error)

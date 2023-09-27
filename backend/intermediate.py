@@ -29,6 +29,7 @@ class Inter(YAPLVisitor):
         self.line = ""
         self.label = 0
         self.scope_ids = 0
+        self.let_ids = 0
         self.lets = []
         self.strprint = []
 
@@ -37,6 +38,7 @@ class Inter(YAPLVisitor):
         # self.method_actual = ["global"]
         self.method_actual = []
         self.class_actual = []
+        self.loColocoONo = True
 
         self.clases = clases
         self.metodos = metodos
@@ -84,10 +86,6 @@ class Inter(YAPLVisitor):
         return self.visitChildren(ctx)
 
 
-    def visitAttribute(self, ctx):
-        return self.visitChildren(ctx)
-
-
     def visitBlock(self, ctx):
         return self.visitChildren(ctx)
 
@@ -115,7 +113,7 @@ class Inter(YAPLVisitor):
         self.line += start
         self.visitChildren(ctx)
         self.class_actual.pop()
-        end = "class end\n"
+        end = "class end\n\n\n"
         self.line += end
         
 
@@ -128,7 +126,7 @@ class Inter(YAPLVisitor):
         start += "func begin " + str(actual.get_size())  + "\n"
         self.line += start
         self.visitChildren(ctx)
-        end = "func end\n"
+        end = "func end\n\n"
         self.line += end
         self.method_actual.pop()
 
@@ -143,6 +141,10 @@ class Inter(YAPLVisitor):
         if "=" in Le:
             Les = Le.split(" ")
             Le = Les[0]
+
+        if "=" in Ri:
+            Ris = Ri.split(" ")
+            Ri = Ris[0]
 
         if "=" in Le and "=" in Ri:
             Les = Le.split(" ")
@@ -167,7 +169,7 @@ class Inter(YAPLVisitor):
         if Le in self.og_registers:
             self.registers.append(Le)
             
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -198,7 +200,7 @@ class Inter(YAPLVisitor):
         if Le in self.og_registers:
             self.registers.append(Le)
 
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -229,7 +231,7 @@ class Inter(YAPLVisitor):
         if Le in self.og_registers:
             self.registers.append(Le)
 
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -260,7 +262,7 @@ class Inter(YAPLVisitor):
         if Le in self.og_registers:
             self.registers.append(Le)
 
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -291,7 +293,7 @@ class Inter(YAPLVisitor):
         if Le in self.og_registers:
             self.registers.append(Le)
 
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -322,7 +324,7 @@ class Inter(YAPLVisitor):
         if Le in self.og_registers:
             self.registers.append(Le)
 
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -353,7 +355,7 @@ class Inter(YAPLVisitor):
         if Le in self.og_registers:
             self.registers.append(Le)
 
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -364,7 +366,7 @@ class Inter(YAPLVisitor):
         operation = register + " = " + string
         if string in self.og_registers:
             self.registers.append(string)
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         self.strprint.append(len(string)-2)
         return register
 
@@ -375,7 +377,7 @@ class Inter(YAPLVisitor):
         operation = register + " = " + num
         if num in self.og_registers:
             self.registers.append(num)
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         self.strprint.append(len(num))
         return register
         #return self.visitChildren(ctx)
@@ -388,7 +390,7 @@ class Inter(YAPLVisitor):
         operation = register + " = " + Negat
         if ne in self.og_registers:
             self.registers.append(ne)
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -400,19 +402,19 @@ class Inter(YAPLVisitor):
         operation = register + " = " + Negat
         if ne in self.og_registers:
             self.registers.append(ne)
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
 
     def visitNegation(self, ctx):
         ne = self.visit(ctx.expr())
-        Negat = ctx.NOT().getText() + str(ne)
+        Negat = ctx.NOT().getText() + " " + str(ne)
         register = self.registers.pop()
         operation = register + " = " + Negat
         if ne in self.og_registers:
             self.registers.append(ne)
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
         #return self.visitChildren(ctx)
 
@@ -423,14 +425,14 @@ class Inter(YAPLVisitor):
         operation = register + " = " + "allocate byte_size " + type
         if type in self.og_registers:
             self.registers.append(type)
-        self.line += operation + "\n"
+        self.line += "\t" + operation + "\n"
         return register
 
 
     def visitFalse(self, ctx):
         false = "0"
         register = self.registers.pop()
-        self.line += register + " = " + "Bool " + str(false) + "\n"
+        self.line += "\t" + register + " = " + "Bool " + str(false) + "\n"
         if register in self.og_registers:
             self.registers.append(register)
         return register
@@ -440,7 +442,7 @@ class Inter(YAPLVisitor):
     def visitTrue(self, ctx):
         true = "1"
         register = self.registers.pop()
-        self.line +=  register + " = " + "Bool " + str(true) + "\n"
+        self.line +=  "\t" + register + " = " + "Bool " + str(true) + "\n"
         if register in self.og_registers:
             self.registers.append(register)
         return register
@@ -449,31 +451,34 @@ class Inter(YAPLVisitor):
 
     def visitWhile(self, ctx):
         self.scope_ids += 1
+        self.loColocoONo = False
         self.scope_actual.append("while" + str(self.scope_ids))
         start_label = "L" + str(self.label)
         while_line = start_label + ":\n"
         self.label += 1
-        self.line += while_line
+        self.line += "\t" + while_line
         register = self.visit(ctx.expr(0))
         true_label = "L" + str(self.label)
         self.label += 1
         while_cont1 = "IfW " + str(register) + " Goto " + str(true_label) +"\n"
         if register in self.og_registers:
             self.registers.append(register)
-        self.line += while_cont1
-        self.line += "Goto " + "L_END_WHILE" + "\n"
+        self.line += "\t" + while_cont1
+        self.line += "\t" + "Goto " + "L_END_WHILE" + "\n"
         self.line += true_label + ":\n"
         self.visit(ctx.expr(1))
         while_loop = "Goto " + start_label + "\n"
-        self.line += while_loop
+        self.line += "\t" + while_loop
         self.line += "L_END_WHILE" + "\n"
         self.scope_actual.pop()
+        self.loColocoONo = True
         return 0
         #return self.visitChildren(ctx)
 
 
     def visitIf(self, ctx):
         self.scope_ids += 1
+        self.loColocoONo = False
         name = "if" + str(self.scope_ids)
         self.scope_actual.append(name)
         register = self.visit(ctx.expr(0))
@@ -482,15 +487,15 @@ class Inter(YAPLVisitor):
         if_line = "IfZ " + str(register) + " Goto " + str(salto) + "\n"
         if register in self.og_registers:
             self.registers.append(register)
-        self.line += if_line
-        self.line += "Goto " + "L" + str(self.label) + "\n"
+        self.line += "\t" + if_line
+        self.line += "\t" + "Goto " + "L" + str(self.label) + "\n"
         self.line += salto + ":\n"
         self.visit(ctx.expr(1))
         end = ""
         if ctx.expr(2):
             #end_line = salto + ": \n"
             end = "L_END_IF"
-            self.line += "Goto " + end + "\n"
+            self.line += "\t" + "Goto " + end + "\n"
             elsee = "L" + str(self.label)
             self.line += elsee + ":\n"
             self.visit(ctx.expr(2))
@@ -501,31 +506,33 @@ class Inter(YAPLVisitor):
         if len(end) > 0:
             self.line += end + "\n"
         self.scope_actual.pop()
+        self.loColocoONo = True
         return 0
         #return self.visitChildren(ctx)
 
 
     def visitLetIn(self, ctx):
         self.scope_ids += 1
+        self.let_ids += 1
         self.scope_actual.append("let" + str(self.scope_ids))
-        start_label = "L" + str(self.label)
-        let_line = start_label + ":\n"
-        self.label += 1
-        self.line += let_line
+        # start_label = "L" + str(self.label)
+        # let_line = start_label + ":\n"
+        # self.label += 1
+        # self.line += let_line
         let = self.visit(ctx.declaration(0))
-        true_label = "L" + str(self.label)
-        self.label += 1
-        let_cont1 = "IfL " + str(let) + " Goto " + str(true_label) + "\n"
+        true_label = "L" + str(self.let_ids)
+        #self.label += 1
+        let_cont1 = "LET " + str(let) + " Goto " + "START_LET_" + str(true_label) + "\n"
         if let in self.og_registers:
             self.registers.append(let)
         if ctx.declaration(1):
             let1 = self.visit(ctx.declaration(1))
-        self.line += let_cont1
-        self.line += "Goto " + "L_END_LET" + "\n"
-        self.line += true_label + ":\n"
+        self.line += "\t" + let_cont1
+        # self.line += "Goto " + "L_END_LET" + "\n"
+        self.line += "START_LET_" + true_label + ":\n"
         self.visit(ctx.expr())
-        let_loop = "Goto " + start_label + "\n"
-        self.line += let_loop
+        # let_loop = "Goto " + start_label + "\n"
+        # self.line += let_loop
         self.line += "L_END_LET" + "\n"
         self.scope_actual.pop()
         return 0
@@ -565,6 +572,7 @@ class Inter(YAPLVisitor):
 
     def visitCall(self, ctx):
         method = ctx.ID().getText()
+        self.loColocoONo = False
         
         # if method == "in_string" or method == "in_int":
         #     return self.visitChildren(ctx)
@@ -577,16 +585,20 @@ class Inter(YAPLVisitor):
             for arg in ctx.expr():
                
                 param = self.visit(arg)
-                self.line += "push param " + str(param) + "\n"
+
+                if "=" in param:
+                    paramsss = param.split(" ")
+                    param = paramsss[0]
+                self.line += "\t" + "push param " + str(param) + "\n"
         register = self.registers.pop()
-        self.line += register + " = _MCall " + method + "\n"
+        self.line += "\t" + register + " = _MCall " + method + "\n"
         if method == "in_string" or method == "in_int" or method == "out_string" or method == "out_int":
             if self.strprint != []:   
                 popparams = self.strprint.pop()
-                self.line += "PopParams" + " " + str(popparams) + "\n"
+                self.line += "\t" + "PopParams" + " " + str(popparams) + "\n"
         if register in self.og_registers:
             self.registers.append(register)
-
+        self.loColocoONo = True
         return register
 
         #return self.visitChildren(ctx)
@@ -600,19 +612,19 @@ class Inter(YAPLVisitor):
 
         if ctx.expr(0) :
             expr2 = self.visit(ctx.expr(0))
-            self.line += "param " + str(expr2) + "\n"
+            self.line += "\t" + "param " + str(expr2) + "\n"
             if expr2 in self.og_registers:
                 self.registers.append(expr2)
 
         if ctx.expr(1) :
             expr2 = self.visit(ctx.expr(1))
-            self.line += "push param " + str(expr2) + "\n"
+            self.line += "\t" + "push param " + str(expr2) + "\n"
             if expr2 in self.og_registers:
                 self.registers.append(expr2)
 
         if ctx.expr(2):
             expr2 = self.visit(ctx.expr(2))
-            self.line += "push param " + str(expr2) + "\n"
+            self.line += "\t" + "push param " + str(expr2) + "\n"
             if expr2 in self.og_registers:
                 self.registers.append(expr2)
 
@@ -624,7 +636,7 @@ class Inter(YAPLVisitor):
         #             self.registers.append(param)
 
         register = self.registers.pop()
-        self.line += register + " = _MCall " + name + "\n"
+        self.line += "\t" + register + " = _MCall " + name + "\n"
         if register in self.og_registers:
             self.registers.append(register)
             #expr1 = self.visit(ctx.expr(0))
@@ -640,62 +652,147 @@ class Inter(YAPLVisitor):
         #return self.visitChildren(ctx)
 
 
+    def visitAttribute(self, ctx):
+        name = ctx.ID().getText()
+        claseRevisador = self.scopes[self.class_actual[0]]
+        # for para in claseRevisador.params:
+        #     if type(para).__name__ == "Method":
+        #         if para.name == self.method_actual[0]:
+        #             metodoRevisador = para
+        #             break
+
+        offset = 0
+        for para in claseRevisador.params:
+            if type(para).__name__ == "Property":
+                if para.get_property_name(name) == name:
+                    if para.get_expression() != None:
+
+                        
+                        for scope in self.class_actual:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
+
+                        if para.type == "Bool":
+                            if symbol == 'true':
+                                symbol = "Bool 1"
+                            else:
+                                symbol = "Bool 2"
+
+                        elif para.type == "String":
+                                symbol = para.expr.str
+
+                        elif para.type == "Int":
+                                if type(para.expr).__name__  != "Int":
+                                    symbol = self.visit(ctx.expr())
+
+                        
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
+                        equal = str(value) + " = " + str(symbol) + "\n"
+                        if symbol == None:
+                            return value
+
+                        self.line += "\t" + equal
+                        return equal
+                    else:
+
+                        offset = 0
+                        for scope in self.class_actual[::-1]:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
+
+                        for symbol in actualScope.params:
+                            if symbol.name == name:
+                                break
+                            else:
+                                if symbol.type in DEFAULT_TYPES:
+                                    offset += DEFAULT_TYPES[symbol.type]
+
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
+                        return value
+                else:
+                    if para.type in DEFAULT_TYPES:
+                        offset += DEFAULT_TYPES[para.type]
+        #return self.visitChildren(ctx)
+
+
     def visitId(self, ctx):
         name = ctx.ID().getText()
-        for nombre in self.property:
-            if nombre.get_property_name(name) == name:
-                if nombre.get_expression() != None:
+        claseRevisador = self.scopes[self.class_actual[0]]
+        for para in claseRevisador.params:
+            if type(para).__name__ == "Method":
+                if len(self.method_actual) > 0:
+                    if para.name == self.method_actual[0]:
+                        metodoRevisador = para
+                        break
 
-                    offset = 0
-                    for scope in self.class_actual:
-                        actualScope = self.scopes[scope]
-                        if symbol := actualScope.get_symbol(name):
-                            break
+        offset = 0
+        for para in claseRevisador.params:
+            if type(para).__name__ == "Property":
+                if para.get_property_name(name) == name:
+                    if para.get_expression() != None:
 
-                    sName = actualScope.name[0] + str(actualScope.scope_ids)
-                    value  = sName + "[" + str(offset) + "]"
-                    equal = str(value) + " = " + str(symbol) + "\n"
-                    if symbol == None:
+                        
+                        for scope in self.class_actual:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
+
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
+                        equal = str(value) + " = " + str(symbol) + "\n"
+                        if symbol == None:
+                            return value
+                        
+                        if self.loColocoONo:
+                            self.line += "\t" + equal
+                        return equal
+                    else:
+
+                        offset = 0
+                        for scope in self.class_actual[::-1]:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
+
+                        for symbol in actualScope.params:
+                            if symbol.name == name:
+                                break
+                            else:
+                                if symbol.type in DEFAULT_TYPES:
+                                    offset += DEFAULT_TYPES[symbol.type]
+
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
                         return value
-
-                    self.line += equal
-                    return equal
                 else:
+                    if para.type in DEFAULT_TYPES:
+                        offset += DEFAULT_TYPES[para.type]
 
+
+        for forma in metodoRevisador.formalParams:
+            if type(forma).__name__ == "Formal":
+                if forma.name  == name:
                     offset = 0
-                    for scope in self.class_actual[::-1]:
-                        actualScope = self.scopes[scope]
-                        if symbol := actualScope.get_symbol(name):
-                            break
 
-                    for symbol in actualScope.params:
+                    for para in claseRevisador.params:
+                        if type(para).__name__ == "Method":
+                            if para.name == self.method_actual[0]:
+                                metodoRevisador = para
+                                if symbol := metodoRevisador.get_symbol(name):
+                                    break
+
+                    for symbol in metodoRevisador.formalParams:
                         if symbol.name == name:
                             break
                         else:
                             if symbol.type in DEFAULT_TYPES:
                                 offset += DEFAULT_TYPES[symbol.type]
 
-                    sName = actualScope.name[0] + str(actualScope.scope_ids)
-                    value  = sName + "[" + str(offset) + "]"
-                    return value
-
-
-        for form in self.formal:
-            if form.name  == name:
-                    offset = 0
-                    for scope in self.method_actual[::-1]:
-                        actualScope = self.scopes[scope]
-                        if symbol := actualScope.get_symbol(name):
-                            break
-
-                    for symbol in actualScope.formalParams:
-                        if symbol.name == name:
-                            break
-                        else:
-                            if symbol.type in DEFAULT_TYPES:
-                                offset += DEFAULT_TYPES[symbol.type]
-
-                    sName = actualScope.name[0] + str(actualScope.id)
+                    sName = metodoRevisador.name[0] + str(metodoRevisador.id)
                     value  = sName + "[" + str(offset) + "]"
 
                     # for l in self.lets:
@@ -705,156 +802,203 @@ class Inter(YAPLVisitor):
                     #         break
                     return value
 
+
+        # for form in self.formal:
+        #     if form.name  == name:
+        #             offset = 0
+        #             for scope in self.method_actual[::-1]:
+        #                 actualScope = self.scopes[scope]
+        #                 if symbol := actualScope.get_symbol(name):
+        #                     break
+
+        #             for symbol in actualScope.formalParams:
+        #                 if symbol.name == name:
+        #                     break
+        #                 else:
+        #                     if symbol.type in DEFAULT_TYPES:
+        #                         offset += DEFAULT_TYPES[symbol.type]
+
+        #             sName = actualScope.name[0] + str(actualScope.id)
+        #             value  = sName + "[" + str(offset) + "]"
+
+        #             # for l in self.lets:
+        #             #     if value in l:
+        #             #         offset += DEFAULT_TYPES[symbol.type]
+        #             #         value  = sName + "[" + str(offset) + "]"
+        #             #         break
+        #             return value
+
         for decl in self.letin:
-            if decl.name.name == name:
+            if decl.name.name == name and decl.clase == self.class_actual[0] and decl.metodo == self.method_actual[0]:
                     offset = 0
-                    for scope in self.method_actual[::-1]:
-                        actualScope = self.scopes[scope]
-                        break
-
-                    for decl in self.letin:
-                        if decl.name.name == name:
-                            break
-                        else:
-                            if decl.name.type in DEFAULT_TYPES:
+                    for indice, decl in enumerate(self.letin):
+                        if decl.name.name == name  and decl.clase == self.class_actual[0] and decl.metodo == self.method_actual[0]:
+                            if decl.name.type in DEFAULT_TYPES and self.letin[indice - 1].letpues > 1:
                                 offset += DEFAULT_TYPES[decl.name.type]
+                            else:
+                                break
 
-                    sName = "l" + actualScope.name[0] + str(actualScope.id)
+
+
+                    sName = "l" + metodoRevisador.name[0] + str(metodoRevisador.id)
                     value  = sName + "[" + str(offset) + "]"
 
-                    for l in self.lets:
-                        if name in l:
-                            value = l[1]
-                            break
+                    # for l in self.lets:
+                    #     if name in l:
+                    #         value = l[1]
+                    #         break
                     return value
 
 
     def visitAssignment(self, ctx):
         name = ctx.ID().getText()
-        for nombre in self.property:
-            if nombre.get_property_name(name) == name:
-                if nombre.get_expression() != None:
-                    offset = 0
-                    for scope in self.class_actual:
-                        actualScope = self.scopes[scope]
-                        if symbol := actualScope.get_symbol(name):
-                            break
+        self.loColocoONo = False
 
-                    sName = actualScope.name[0] + str(actualScope.scope_ids)
-                    value  = sName + "[" + str(offset) + "]"
+        claseRevisador = self.scopes[self.class_actual[0]]
+        for para in claseRevisador.params:
+            if type(para).__name__ == "Method":
+                if para.name == self.method_actual[0]:
+                    metodoRevisador = para
                     break
 
-                else:
-                    offset = 0
-                    for scope in self.class_actual:
-                        actualScope = self.scopes[scope]
-                        if symbol := actualScope.get_symbol(name):
-                            break
+        offset = 0
+        for para in claseRevisador.params:
+            if type(para).__name__ == "Property":
+                if para.get_property_name(name) == name:
+                    if para.get_expression() != None:
 
-                    for symbol in actualScope.params:
-                        if symbol.name == name:
-                            break
-                        else:
-                            if symbol.type in DEFAULT_TYPES:
-                                offset += DEFAULT_TYPES[symbol.type]
+                        for scope in self.class_actual:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
 
-                    sName = actualScope.name[0] + str(actualScope.scope_ids)
-                    value  = sName + "[" + str(offset) + "]"
-                    break
-
-        for decl in self.letin:
-            if decl.name.name == name:
-                    offset = 0
-                    for scope in self.method_actual[::-1]:
-                        actualScope = self.scopes[scope]
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
                         break
 
-                    for decl in self.letin:
-                        if decl.name.name == name:
-                            break
-                        else:
-                            if decl.name.type in DEFAULT_TYPES:
-                                offset += DEFAULT_TYPES[decl.name.type]
+                    else:
+                        offset = 0
+                        for scope in self.class_actual:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
 
-                    sName = "l" + actualScope.name[0] + str(actualScope.id)
+                        for symbol in actualScope.params:
+                            if symbol.name == name:
+                                break
+                            else:
+                                if symbol.type in DEFAULT_TYPES:
+                                    offset += DEFAULT_TYPES[symbol.type]
+
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
+                        break
+                else:
+                    if para.type in DEFAULT_TYPES:
+                        offset += DEFAULT_TYPES[para.type]
+
+
+        for decl in self.letin:
+            if decl.name.name == name and decl.clase == self.class_actual[0] and decl.metodo == self.method_actual[0]:
+                    offset = 0
+                    for indice, decl in enumerate(self.letin):
+                        if decl.name.name == name  and decl.clase == self.class_actual[0] and decl.metodo == self.method_actual[0]:
+                            if decl.name.type in DEFAULT_TYPES and self.letin[indice - 1].letpues > 1:
+                                offset += DEFAULT_TYPES[decl.name.type]
+                            else:
+                                break
+
+                    sName = "l" + metodoRevisador.name[0] + str(metodoRevisador.id)
                     value  = sName + "[" + str(offset) + "]"
 
-                    for l in self.lets:
-                        if name in l:
-                            value = l[1]
-                            break
-                    self.lets.append([name, value])
-
-                    # for n in self.scope_actual[::-1]:
-                    #     if "let" in n:
-                    #         self.scope_actual.append(name)
                     break
         expr = self.visit(ctx.expr())
 
         equal = str(value) + " = " + str(expr) + "\n"
-        self.line += equal
+        self.line += "\t" + equal
+        self.loColocoONo = True
         return equal
         #return self.visitChildren(ctx)
 
 
     def visitDeclaration(self, ctx):
         name = ctx.ID().getText()
-        for nombre in self.property:
-            if nombre.get_property_name(name) == name:
-                if nombre.get_expression() != None:
-                    offset = 0
-                    for scope in self.class_actual:
-                        actualScope = self.scopes[scope]
-                        if symbol := actualScope.get_symbol(name):
-                            break
 
-                    sName = actualScope.name[0] + str(actualScope.scope_ids)
-                    value  = sName + "[" + str(offset) + "]"
+        claseRevisador = self.scopes[self.class_actual[0]]
+        for para in claseRevisador.params:
+            if type(para).__name__ == "Method":
+                if para.name == self.method_actual[0]:
+                    metodoRevisador = para
                     break
 
-                else:
-                    offset = 0
-                    for scope in self.class_actual:
-                        actualScope = self.scopes[scope]
-                        if symbol := actualScope.get_symbol(name):
-                            break
+        for para in claseRevisador.params:
+            if type(para).__name__ == "Property":
+        #for nombre in self.property:
+                if para.get_property_name(name) == name:
+                    if para.get_expression() != None:
+                        offset = 0
+                        for scope in self.class_actual:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
 
-                    for symbol in actualScope.params:
-                        if symbol.name == name:
-                            break
-                        else:
-                            if symbol.type in DEFAULT_TYPES:
-                                offset += DEFAULT_TYPES[symbol.type]
-
-                    sName = actualScope.name[0] + str(actualScope.scope_ids)
-                    value  = sName + "[" + str(offset) + "]"
-                    break
-
-        for decl in self.letin:
-            if decl.name.name == name:
-                    offset = 0
-                    for scope in self.method_actual[::-1]:
-                        actualScope = self.scopes[scope]
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
                         break
 
-                    for decl in self.letin:
-                        if decl.name.name == name:
-                            break
-                        else:
-                            if decl.name.type in DEFAULT_TYPES:
-                                offset += DEFAULT_TYPES[decl.name.type]
+                    else:
+                        offset = 0
+                        for scope in self.class_actual:
+                            actualScope = self.scopes[scope]
+                            if symbol := actualScope.get_symbol(name):
+                                break
 
-                    sName = "l" + actualScope.name[0] + str(actualScope.id)
+                        for symbol in actualScope.params:
+                            if symbol.name == name:
+                                break
+                            else:
+                                if symbol.type in DEFAULT_TYPES:
+                                    offset += DEFAULT_TYPES[symbol.type]
+
+                        sName = actualScope.name[0] + str(actualScope.scope_ids)
+                        value  = sName + "[" + str(offset) + "]"
+                        break
+
+        # for decl in self.letin:
+        #     if decl.name.name == name:
+        #             offset = 0
+        #             for scope in self.method_actual[::-1]:
+        #                 actualScope = self.scopes[scope]
+        #                 break
+
+        #             for decl in self.letin:
+        #                 if decl.name.name == name:
+        #                     break
+        #                 else:
+        #                     if decl.name.type in DEFAULT_TYPES:
+        #                         offset += DEFAULT_TYPES[decl.name.type]
+
+        for decl in self.letin:
+            if decl.name.name == name and decl.clase == self.class_actual[0] and decl.metodo == self.method_actual[0]:
+                    offset = 0
+                    for indice, decl in enumerate(self.letin):
+                        if decl.name.name == name  and decl.clase == self.class_actual[0] and decl.metodo == self.method_actual[0]:
+                            if decl.name.type in DEFAULT_TYPES and self.letin[indice - 1].letpues > 1:
+                                offset += DEFAULT_TYPES[decl.name.type]
+                            else:
+                                break
+
+                    sName = "l" + metodoRevisador.name[0] + str(metodoRevisador.id)
                     value  = sName + "[" + str(offset) + "]"
 
-                    for l in self.lets:
-                        if name in l:
-                            value = l[1]
-                            break
-                    self.lets.append([name, value])
+                    # for l in self.lets:
+                    #     if name in l:
+                    #         value = l[1]
+                    #         break
+                    # self.lets.append([name, value])
                     break
 
-        type = ctx.TYPE().getText()
+        #type = ctx.TYPE().getText()
 
         if ctx.expr():
             expr = self.visit(ctx.expr())
@@ -864,7 +1008,7 @@ class Inter(YAPLVisitor):
                 self.registers.append(expr)
             if value in self.og_registers:
                 self.registers.append(value)
-            self.line += operation + "\n"
+            self.line += "\t" + operation + "\n"
             return register
 
         return value
