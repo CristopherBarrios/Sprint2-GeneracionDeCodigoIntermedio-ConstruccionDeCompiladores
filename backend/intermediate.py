@@ -39,6 +39,7 @@ class Inter(YAPLVisitor):
         self.method_actual = []
         self.class_actual = []
         self.loColocoONo = True
+        self.colocarTerm = True
 
         self.clases = clases
         self.metodos = metodos
@@ -135,8 +136,11 @@ class Inter(YAPLVisitor):
 
 
     def visitAdd(self, ctx):
+        self.colocarTerm = False
         Le = self.visit(ctx.expr(0))
         Ri = self.visit(ctx.expr(1))
+
+        self.colocarTerm = True
 
         if "=" in Le:
             Les = Le.split(" ")
@@ -591,12 +595,19 @@ class Inter(YAPLVisitor):
                     param = paramsss[0]
                 self.line += "\t" + "push param " + str(param) + "\n"
         register = self.registers.pop()
-        self.line += "\t" + register + " = _MCall " + method + "\n"
+
+        CuantosTenemos = 0
+        if ctx.expr():
+            for arg in ctx.expr():
+                CuantosTenemos  += 1
+
+        self.line += "\t" + register + " = _MCall " + method + ", " + str(CuantosTenemos) + "\n"
         if method == "in_string" or method == "in_int" or method == "out_string" or method == "out_int":
             if self.strprint != []:   
                 popparams = self.strprint.pop()
                 self.line += "\t" + "PopParams" + " " + str(popparams) + "\n"
-        if register in self.og_registers:
+        
+        if register in self.og_registers and self.colocarTerm:
             self.registers.append(register)
         self.loColocoONo = True
         return register
@@ -618,12 +629,18 @@ class Inter(YAPLVisitor):
 
         if ctx.expr(1) :
             expr2 = self.visit(ctx.expr(1))
+            if "=" in expr2:
+                    expr2sss = expr2.split(" ")
+                    expr2 = expr2sss[0]
             self.line += "\t" + "push param " + str(expr2) + "\n"
             if expr2 in self.og_registers:
                 self.registers.append(expr2)
 
         if ctx.expr(2):
             expr2 = self.visit(ctx.expr(2))
+            if "=" in expr2:
+                    expr2sss = expr2.split(" ")
+                    expr2 = expr2sss[0]
             self.line += "\t" + "push param " + str(expr2) + "\n"
             if expr2 in self.og_registers:
                 self.registers.append(expr2)
@@ -635,8 +652,14 @@ class Inter(YAPLVisitor):
         #         if param in self.og_registers:
         #             self.registers.append(param)
 
+        CuantosTenemos = 0
+        if ctx.expr():
+            for arg in ctx.expr():
+                CuantosTenemos  += 1
+            CuantosTenemos -= 1
+        
         register = self.registers.pop()
-        self.line += "\t" + register + " = _MCall " + name + "\n"
+        self.line += "\t" + register + " = _MCall " + name + ", " + str(CuantosTenemos) + "\n"
         if register in self.og_registers:
             self.registers.append(register)
             #expr1 = self.visit(ctx.expr(0))

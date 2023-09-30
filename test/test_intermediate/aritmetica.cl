@@ -1,5 +1,5 @@
 class Other {
-      g: String <- "Odio Aqui";
+      g: String <- "Este es un ejemplo";
       h: Int <- 4;
       i: Int <- 5;
       j: Int <- 14;

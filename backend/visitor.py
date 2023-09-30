@@ -1872,6 +1872,30 @@ class MyYAPLVisitor(YAPLVisitor):
                         else:
                             params.pop(0)
                             break
+            elif type(a).__name__ == 'OwnMethod':
+                if idC is not None:
+                    for p in params:
+                        id = encontradorClases(a.method,self.table)
+                        if id is not None:
+                            if id['type']!= p['type']:
+                                new_error = tables.Error("No corresponden los tipos con el metodo", ctx.start.line, ctx.start.column,a.name)
+                                self.ERRORS.append(new_error)
+                                params.pop(0)
+                                break
+                            else:
+                                params.pop(0)
+                                break
+                        else:
+                            id = encontradorClases(a.method,self.metodos_reservado)
+                            if id is not None:
+                                if id['type']!= p['type']:
+                                    new_error = tables.Error("No corresponden los tipos con el metodo", ctx.start.line, ctx.start.column,a.name)
+                                    self.ERRORS.append(new_error)
+                                    params.pop(0)
+                                    break
+                                else:
+                                    params.pop(0)
+                                    break
             else:
                 if a != None:
                     new_error = tables.Error("No corresponden los tipos con el metodo", ctx.start.line, ctx.start.column,method)
