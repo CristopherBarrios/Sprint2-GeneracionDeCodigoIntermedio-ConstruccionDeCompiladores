@@ -40,6 +40,9 @@ class Inter(YAPLVisitor):
         self.class_actual = []
         self.loColocoONo = True
         self.colocarTerm = True
+        self.disminuyoIfONo = False
+        self.colocarlessQ = False
+        self.contandiFis = 0
 
         self.clases = clases
         self.metodos = metodos
@@ -303,8 +306,10 @@ class Inter(YAPLVisitor):
 
 
     def visitLessEqual(self, ctx):
+        self.colocarlessQ = True
         Le = self.visit(ctx.expr(0))
         Ri = self.visit(ctx.expr(1))
+        self.colocarlessQ = True
 
         if "=" in Le and "=" in Ri:
             Les = Le.split(" ")
@@ -401,7 +406,7 @@ class Inter(YAPLVisitor):
 
     def visitIsVoid(self, ctx):
         ne = self.visit(ctx.expr())
-        Negat = ctx.ISVOID().getText() + str(ne)
+        Negat = ctx.ISVOID().getText() + " " + str(ne)
         register = self.registers.pop()
         operation = register + " = " + Negat
         if ne in self.og_registers:
@@ -460,7 +465,7 @@ class Inter(YAPLVisitor):
         start_label = "L" + str(self.label)
         while_line = start_label + ":\n"
         self.label += 1
-        self.line += "\t" + while_line
+        self.line += while_line
         register = self.visit(ctx.expr(0))
         true_label = "L" + str(self.label)
         self.label += 1
@@ -482,6 +487,10 @@ class Inter(YAPLVisitor):
 
     def visitIf(self, ctx):
         self.scope_ids += 1
+        if self.disminuyoIfONo:
+            self.contandiFis += 1
+            self.label += 1
+        self.disminuyoIfONo = True
         self.loColocoONo = False
         name = "if" + str(self.scope_ids)
         self.scope_actual.append(name)
@@ -503,13 +512,17 @@ class Inter(YAPLVisitor):
             elsee = "L" + str(self.label)
             self.line += elsee + ":\n"
             self.visit(ctx.expr(2))
-            self.label += 1
+            if self.contandiFis == 0:
+                self.label += 1
+            else:
+                self.contandiFis -= 1
         else:
             end_line = "L" + str(self.label) + ":\n"
             self.line += end_line
         if len(end) > 0:
             self.line += end + "\n"
         self.scope_actual.pop()
+        self.disminuyoIfONo = False
         self.loColocoONo = True
         return 0
         #return self.visitChildren(ctx)
@@ -622,28 +635,26 @@ class Inter(YAPLVisitor):
             type = ctx.TYPE().getText()
 
         if ctx.expr(0) :
-            expr2 = self.visit(ctx.expr(0))
-            self.line += "\t" + "param " + str(expr2) + "\n"
-            if expr2 in self.og_registers:
-                self.registers.append(expr2)
+            exprParam = self.visit(ctx.expr(0))
+            self.line += "\t" + "param " + str(exprParam) + "\n"
 
         if ctx.expr(1) :
-            expr2 = self.visit(ctx.expr(1))
-            if "=" in expr2:
-                    expr2sss = expr2.split(" ")
-                    expr2 = expr2sss[0]
-            self.line += "\t" + "push param " + str(expr2) + "\n"
-            if expr2 in self.og_registers:
-                self.registers.append(expr2)
+            expr2pushparam1 = self.visit(ctx.expr(1))
+            if expr2pushparam1 is not None:
+                if "=" in expr2pushparam1:
+                        expr2sss = expr2pushparam1.split(" ")
+                        expr2pushparam1 = expr2sss[0]
+            self.line += "\t" + "push param " + str(expr2pushparam1) + "\n"
+
 
         if ctx.expr(2):
-            expr2 = self.visit(ctx.expr(2))
-            if "=" in expr2:
-                    expr2sss = expr2.split(" ")
-                    expr2 = expr2sss[0]
-            self.line += "\t" + "push param " + str(expr2) + "\n"
-            if expr2 in self.og_registers:
-                self.registers.append(expr2)
+            expr2pushparam2 = self.visit(ctx.expr(2))
+            if expr2pushparam2 is not None:
+                if "=" in expr2pushparam2:
+                        expr2sss = expr2pushparam2.split(" ")
+                        expr2pushparam2 = expr2sss[0]
+            self.line += "\t" + "push param " + str(expr2pushparam2) + "\n"
+
 
         # if ctx.expr():
         #     for arg in ctx.expr():
@@ -670,6 +681,18 @@ class Inter(YAPLVisitor):
             return self.visitChildren(ctx)
         if name == "out_int":
             return self.visitChildren(ctx)
+        
+        if ctx.expr(0) :
+            if exprParam in self.og_registers:
+                self.registers.append(exprParam)
+
+        if ctx.expr(1) :
+            if expr2pushparam1 in self.og_registers:
+                self.registers.append(expr2pushparam1)
+
+        if ctx.expr(2):
+            if expr2pushparam2 in self.og_registers:
+                self.registers.append(expr2pushparam2)
 
         return register
         #return self.visitChildren(ctx)
@@ -764,9 +787,28 @@ class Inter(YAPLVisitor):
                             if symbol := actualScope.get_symbol(name):
                                 break
 
+                        offsetNew = 0
+                        for SymbolPara in claseRevisador.params:
+                            if type(SymbolPara).__name__ == "Property":
+                                if SymbolPara.get_property_name(symbol) == symbol:
+                                    if SymbolPara.get_expression() != None:
+                                        for Sybolscope in self.class_actual:
+                                            SymbolactualScope = self.scopes[Sybolscope]
+                                            SymbolsName =  SymbolactualScope.name[0] + str(SymbolactualScope.scope_ids)
+                                            Symbolvalue  = SymbolsName + "[" + str(offsetNew) + "]"
+                                            # symbol = Symbolvalue
+                                            symbol = None
+
+                                else:
+                                    if SymbolPara.type in DEFAULT_TYPES:
+                                        offsetNew += DEFAULT_TYPES[SymbolPara.type]
+
                         sName = actualScope.name[0] + str(actualScope.scope_ids)
                         value  = sName + "[" + str(offset) + "]"
                         equal = str(value) + " = " + str(symbol) + "\n"
+
+                        if self.colocarlessQ:
+                            symbol = None
                         if symbol == None:
                             return value
                         
@@ -871,6 +913,10 @@ class Inter(YAPLVisitor):
                     #         value = l[1]
                     #         break
                     return value
+        if name == "self":
+            # if self.loColocoONo:
+            #     self.line += "\t" + "SELF" + "\n"
+            return  "SELF"
 
 
     def visitAssignment(self, ctx):
